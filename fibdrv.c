@@ -23,17 +23,42 @@ static dev_t fib_dev = 0;
 static struct cdev *fib_cdev;
 static struct class *fib_class;
 static DEFINE_MUTEX(fib_mutex);
+static void adder(unsigned long long *,
+                  unsigned long long *,
+                  unsigned long long *,
+                  unsigned long long *);
+
+static void adder(unsigned long long *c,
+                  unsigned long long *s,
+                  unsigned long long *a,
+                  unsigned long long *b)
+{
+    unsigned long long a1, b1;
+
+    a1 = *a;
+    b1 = *b;
+
+    for (int i = 0; i < 64; i++) {
+        *s = a1 ^ b1;
+        *c = (a1 & b1) << 1;
+        a1 = *s;
+        b1 = *c;
+    }
+}
 
 static unsigned long long fib_sequence(long long k)
 {
     /* FIXME: use clz/ctz and fast algorithms to speed up */
-    unsigned long long f[k + 2];
+    unsigned long long f[k + 2], s = 0, c = 0;
 
     f[0] = 0;
     f[1] = 1;
 
     for (int i = 2; i <= k; i++) {
-        f[i] = f[i - 1] + f[i - 2];
+        s = 0;
+        c = 0;
+        adder(&c, &s, &f[i - 1], &f[i - 2]);
+        f[i] = s;
     }
 
     return f[k];

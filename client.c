@@ -10,7 +10,7 @@
 int main()
 {
     int fd;
-    long long sz;
+    unsigned long long sz;
 
     char buf[1];
     char write_buf[] = "testing writing";

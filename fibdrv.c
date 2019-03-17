@@ -1,3 +1,4 @@
+#include <asm/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>
@@ -6,6 +7,9 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("National Cheng Kung University, Taiwan");
@@ -19,6 +23,7 @@ MODULE_VERSION("0.1");
  */
 #define MAX_LENGTH 92
 
+static char test_buf[30];
 static dev_t fib_dev = 0;
 static struct cdev *fib_cdev;
 static struct class *fib_class;
@@ -27,7 +32,66 @@ static void adder(unsigned long long *,
                   unsigned long long *,
                   unsigned long long *,
                   unsigned long long *);
+static bool fib_num_to_str(char *str, int size, unsigned long long *n);
 
+static bool fib_num_to_str(char *str, int size, unsigned long long *n)
+{
+    unsigned long long n_tmp = 0, tmp = 0;
+    int i = 0;
+
+    if (size == 0)
+        return false;
+
+    for (int i = 0; i < size; i++) {
+        str[i] &= 0;
+    }
+
+    i = 0;
+    n_tmp = *n;
+    while (1) {
+        tmp = n_tmp / 10;
+        n_tmp = n_tmp - (tmp << 3) - (tmp << 1);
+
+        switch (n_tmp) {
+        case 9:
+            str[i++] |= '9';
+            break;
+        case 8:
+            str[i++] |= '8';
+            break;
+        case 7:
+            str[i++] |= '7';
+            break;
+        case 6:
+            str[i++] |= '6';
+            break;
+        case 5:
+            str[i++] |= '5';
+            break;
+        case 4:
+            str[i++] |= '4';
+            break;
+        case 3:
+            str[i++] |= '3';
+            break;
+        case 2:
+            str[i++] |= '2';
+            break;
+        case 1:
+            str[i++] |= '1';
+            break;
+        case 0:
+            str[i++] |= '0';
+            break;
+        }
+        if (tmp == 0)
+            break;
+        if (i >= size)
+            return false;
+        n_tmp = tmp;
+    }
+    return true;
+};
 static void adder(unsigned long long *c,
                   unsigned long long *s,
                   unsigned long long *a,
@@ -81,11 +145,17 @@ static int fib_release(struct inode *inode, struct file *file)
 
 /* calculate the fibonacci number at given offset */
 static ssize_t fib_read(struct file *file,
-                        char *buf,
+                        char __user *user_buf,
                         size_t size,
                         loff_t *offset)
 {
-    return (ssize_t) fib_sequence(*offset);
+    unsigned long long fib_n;
+
+    fib_n = fib_sequence(*offset);
+    if (!fib_num_to_str(test_buf, 30, &fib_n))
+        strncpy(test_buf, "not enough buf size.\n", 30);
+    copy_to_user(user_buf, test_buf, 30);
+    return (ssize_t) fib_n;
 }
 
 /* write operation is skipped */

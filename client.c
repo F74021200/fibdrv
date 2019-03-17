@@ -12,8 +12,8 @@ int main()
     int fd;
     unsigned long long sz;
 
-    char buf[1];
-    char write_buf[] = "testing writing";
+    char buf[30];
+    char write_buf[] = "";
     int offset = 100;  // TODO: test something bigger than the limit
     int i = 0;
 
@@ -40,11 +40,11 @@ int main()
 
     for (i = offset; i >= 0; i--) {
         lseek(fd, i, SEEK_SET);
-        sz = read(fd, buf, 1);
+        sz = read(fd, buf, 30);
         printf("Reading from " FIB_DEV
                " at offset %d, returned the sequence "
-               "%lld.\n",
-               i, sz);
+               "%lld.%s\n",
+               i, sz, buf);
     }
 
     close(fd);

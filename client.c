@@ -31,11 +31,11 @@ int main()
 
     for (i = 0; i <= offset; i++) {
         lseek(fd, i, SEEK_SET);
-        sz = read(fd, buf, 1);
+        sz = read(fd, buf, 30);
         printf("Reading from " FIB_DEV
                " at offset %d, returned the sequence "
-               "%lld.\n",
-               i, sz);
+               "%s.\n",
+               i, buf);
     }
 
     for (i = offset; i >= 0; i--) {
@@ -43,8 +43,8 @@ int main()
         sz = read(fd, buf, 30);
         printf("Reading from " FIB_DEV
                " at offset %d, returned the sequence "
-               "%lld.%s\n",
-               i, sz, buf);
+               "%s.\n",
+               i, buf);
     }
 
     close(fd);

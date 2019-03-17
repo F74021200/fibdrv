@@ -1,4 +1,3 @@
-#include <asm/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>
@@ -33,7 +32,35 @@ static void adder(unsigned long long *,
                   unsigned long long *,
                   unsigned long long *);
 static bool fib_num_to_str(char *str, int size, unsigned long long *n);
+static bool rev_str(char *str);
 
+static bool rev_str(char *str)
+{
+    char *start, *end, tmp[1];
+    int sz = 0;
+
+    sz = strlen(str);
+    if (sz == 0)
+        return false;
+    if (sz == 1)
+        return true;
+
+    start = str;
+    end = start + sz - 1;
+    sz = sz >> 1;
+
+    for (int i = 0; i < sz; i++) {
+        tmp[0] &= 0;
+        tmp[0] |= start[0];
+        start[0] &= 0;
+        start[0] |= end[0];
+        end[0] &= 0;
+        end[0] |= tmp[0];
+        ++start;
+        --end;
+    }
+    return true;
+}
 static bool fib_num_to_str(char *str, int size, unsigned long long *n)
 {
     unsigned long long n_tmp = 0, tmp = 0;
@@ -90,6 +117,8 @@ static bool fib_num_to_str(char *str, int size, unsigned long long *n)
             return false;
         n_tmp = tmp;
     }
+    if (!rev_str(str))
+        return false;
     return true;
 };
 static void adder(unsigned long long *c,

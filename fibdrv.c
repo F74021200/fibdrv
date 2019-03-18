@@ -126,17 +126,20 @@ static void adder(unsigned long long *c,
                   unsigned long long *a,
                   unsigned long long *b)
 {
-    unsigned long long a1, b1;
+    unsigned long long a1, b1, c_tmp = 0;
 
     a1 = *a;
     b1 = *b;
 
     for (int i = 0; i < 64; i++) {
         *s = a1 ^ b1;
-        *c = (a1 & b1) << 1;
+        c_tmp = a1 & b1;
+        *c |= (c_tmp & 0x8000000000000000);
+        c_tmp = c_tmp << 1;
         a1 = *s;
-        b1 = *c;
+        b1 = c_tmp;
     }
+    *c = *c >> 63;
 }
 
 static unsigned long long fib_sequence(long long k)

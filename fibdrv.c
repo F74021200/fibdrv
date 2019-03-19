@@ -145,19 +145,27 @@ static void adder(unsigned long long *c,
 static unsigned long long fib_sequence(long long k)
 {
     /* FIXME: use clz/ctz and fast algorithms to speed up */
-    unsigned long long f[k + 2], s = 0, c = 0;
+    unsigned long long f[3], s = 0, c = 0;
 
     f[0] = 0;
     f[1] = 1;
+    f[2] = 0;
 
     for (int i = 2; i <= k; i++) {
         s = 0;
         c = 0;
-        adder(&c, &s, &f[i - 1], &f[i - 2]);
-        f[i] = s;
+        adder(&c, &s, &f[0], &f[1]);
+        f[0] = f[1];
+        f[1] = s;
     }
+    if (k == 0)
+        f[2] = f[0];
+    else if (k == 1)
+        f[2] = f[1];
+    else
+        f[2] = s;
 
-    return f[k];
+    return f[2];
 }
 
 static int fib_open(struct inode *inode, struct file *file)

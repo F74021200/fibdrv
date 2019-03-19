@@ -21,6 +21,11 @@ MODULE_VERSION("0.1");
  * ssize_t can't fit the number > 92
  */
 #define MAX_LENGTH 92
+#define BNSIZE 2
+
+struct bn {
+    unsigned long long n[BNSIZE];
+};
 
 static char test_buf[30];
 static dev_t fib_dev = 0;
@@ -33,7 +38,18 @@ static void adder(unsigned long long *,
                   unsigned long long *);
 static bool fib_num_to_str(char *str, int size, unsigned long long *n);
 static bool rev_str(char *str);
+static bool bn_init(struct bn *);
 
+static bool bn_init(struct bn *n)
+{
+    if (!n)
+        return false;
+
+    for (int i = 0; i < BNSIZE; i++) {
+        n->n[i] &= 0;
+    }
+    return true;
+}
 static bool rev_str(char *str)
 {
     char *start, *end, tmp[1];
@@ -145,27 +161,30 @@ static void adder(unsigned long long *c,
 static unsigned long long fib_sequence(long long k)
 {
     /* FIXME: use clz/ctz and fast algorithms to speed up */
-    unsigned long long f[3], s = 0, c = 0;
+    unsigned long long s = 0, c = 0;
+    struct bn f1, f2, f3;
 
-    f[0] = 0;
-    f[1] = 1;
-    f[2] = 0;
+    bn_init(&f1);
+    bn_init(&f2);
+    bn_init(&f3);
+
+    f2.n[1] |= 1;
 
     for (int i = 2; i <= k; i++) {
         s = 0;
         c = 0;
-        adder(&c, &s, &f[0], &f[1]);
-        f[0] = f[1];
-        f[1] = s;
+        adder(&c, &s, &(f1.n[1]), &(f2.n[1]));
+        f1.n[1] = f2.n[1];
+        f2.n[1] = s;
     }
     if (k == 0)
-        f[2] = f[0];
+        f3.n[1] = f1.n[1];
     else if (k == 1)
-        f[2] = f[1];
+        f3.n[1] = f2.n[1];
     else
-        f[2] = s;
+        f3.n[1] = s;
 
-    return f[2];
+    return f3.n[1];
 }
 
 static int fib_open(struct inode *inode, struct file *file)

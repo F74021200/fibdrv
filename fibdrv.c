@@ -39,7 +39,22 @@ static void adder(unsigned long long *,
 static bool fib_num_to_str(char *str, int size, unsigned long long *n);
 static bool rev_str(char *str);
 static bool bn_init(struct bn *);
+static void bn_add(struct bn *, struct bn *, struct bn *);
 
+static void bn_add(struct bn *a, struct bn *b, struct bn *c)
+{
+    unsigned long long carry = 0, sub_carry = 0, tmp = 0, sub_tmp = 0,
+                       carry_tmp = 0;
+
+    for (int i = BNSIZE - 1; i >= 0; i--) {
+        adder(&sub_carry, &sub_tmp, &(a->n[i]), &(b->n[i]));
+        carry_tmp = sub_carry;
+        sub_carry = carry;
+        adder(&carry, &tmp, &sub_carry, &sub_tmp);
+        carry |= carry_tmp;
+        c->n[i] = tmp;
+    }
+}
 static bool bn_init(struct bn *n)
 {
     if (!n)
@@ -161,7 +176,7 @@ static void adder(unsigned long long *c,
 static unsigned long long fib_sequence(long long k)
 {
     /* FIXME: use clz/ctz and fast algorithms to speed up */
-    unsigned long long s = 0, c = 0;
+    // unsigned long long s = 0, c = 0;
     struct bn f1, f2, f3;
 
     bn_init(&f1);
@@ -171,20 +186,23 @@ static unsigned long long fib_sequence(long long k)
     f2.n[1] |= 1;
 
     for (int i = 2; i <= k; i++) {
-        s = 0;
-        c = 0;
-        adder(&c, &s, &(f1.n[1]), &(f2.n[1]));
-        f1.n[1] = f2.n[1];
-        f2.n[1] = s;
+        // s = 0;
+        // c = 0;
+        bn_add(&f1, &f2, &f3);
+        // adder(&c, &s, &(f1.n[1]), &(f2.n[1]));
+        for (int i = 0; i < BNSIZE; i++) {
+            f1.n[i] = f2.n[i];
+            f2.n[i] = f3.n[i];
+        }
+        // f1.n[1] = f2.n[1];
+        // f2.n[1] = s;
     }
     if (k == 0)
-        f3.n[1] = f1.n[1];
+        return f1.n[1];
     else if (k == 1)
-        f3.n[1] = f2.n[1];
+        return f2.n[1];
     else
-        f3.n[1] = s;
-
-    return f3.n[1];
+        return f3.n[1];
 }
 
 static int fib_open(struct inode *inode, struct file *file)
